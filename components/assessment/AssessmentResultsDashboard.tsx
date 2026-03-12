@@ -33,19 +33,12 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
               Results
             </div>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Assessment Complete
+              Assessment Report
             </h1>
-            <p className="max-w-2xl text-sm leading-6 text-black/70 sm:text-base">
-              Here is a summary of how you responded during the claustrophobia
-              assessment.
-            </p>
           </header>
 
           <div className="mt-8 grid grid-cols-1 gap-5 sm:mt-10 sm:gap-6">
-            <SectionCard
-              title="Severity Score"
-              description="A quick view of overall discomfort."
-            >
+            <SectionCard title="Severity Score">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex items-center gap-3">
@@ -97,10 +90,7 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
             </SectionCard>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
-              <SectionCard
-                title="Main Triggers"
-                description="Common moments that increased discomfort."
-              >
+              <SectionCard title="Main Triggers">
                 <ul className="mt-1 space-y-3">
                   {assessment.triggers.map((trigger) => (
                     <li
@@ -116,10 +106,7 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
                 </ul>
               </SectionCard>
 
-              <SectionCard
-                title="Recommendation"
-                description="What to do next for meaningful progress."
-              >
+              <SectionCard title="Recommendation">
                 <div className="flex flex-col gap-4">
                   <p className="text-sm leading-6 text-black/80">
                     {assessment.recommendation}
@@ -136,10 +123,7 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
               </SectionCard>
             </div>
 
-            <SectionCard
-              title="Scene-wise Breakdown"
-              description="Your selected responses per AR scene."
-            >
+            <SectionCard title="Scene-wise Breakdown">
               <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {assessment.scenes.map((scene) => (
                   <SceneCard

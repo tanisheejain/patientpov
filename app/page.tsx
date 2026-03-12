@@ -29,7 +29,7 @@ export default function Home() {
       },
     ],
     recommendation:
-      "Your responses suggest moderate discomfort in confined spaces. A structured exposure program with a therapist can help you gradually overcome this fear.",
+      "Your responses suggest moderate discomfort in confined spaces. Working with a therapist can help.",
   };
   return <AssessmentResultsDashboard assessment={assessment} />;
 }

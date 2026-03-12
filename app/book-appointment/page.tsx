@@ -3,8 +3,10 @@
 import { CalendarPicker, toDateKey } from "@/components/booking/CalendarPicker";
 import { TherapistCard } from "@/components/booking/TherapistCard";
 import type { Therapist } from "@/components/booking/types";
+import { Modal } from "@/components/ui/Modal";
 import { SectionCard } from "@/components/ui/SectionCard";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 const PAGE_BG =
@@ -73,6 +75,19 @@ export default function BookAppointmentPage() {
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [authStep, setAuthStep] = useState<"auth" | "confirmed">("auth");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupMethod, setSignupMethod] = useState<
+    "apple" | "google" | "email"
+  >("email");
+
+  const router = useRouter();
 
   const slots = useMemo(() => ["10:00 AM", "12:00 PM", "3:00 PM", "6:00 PM"], []);
 
@@ -215,6 +230,18 @@ export default function BookAppointmentPage() {
                 <button
                   type="button"
                   disabled={!canBook}
+                  onClick={() => {
+                    if (!canBook) return;
+                    setAuthMode("login");
+                    setAuthStep("auth");
+                    setLoginEmail("");
+                    setLoginPassword("");
+                    setSignupName("");
+                    setSignupEmail("");
+                    setSignupPassword("");
+                    setSignupMethod("email");
+                    setAuthOpen(true);
+                  }}
                   className={[
                     "group relative inline-flex w-full items-center justify-center rounded-2xl px-6 py-4 text-base font-semibold text-black transition sm:w-auto",
                     canBook
@@ -237,6 +264,213 @@ export default function BookAppointmentPage() {
           </div>
         </div>
       </main>
+
+      <Modal
+        open={authOpen}
+        title={
+          authStep === "confirmed"
+            ? "Appointment confirmed"
+            : authMode === "login"
+              ? "Log in to continue"
+              : "Create an account"
+        }
+        onClose={() => {
+          setAuthOpen(false);
+        }}
+      >
+        {authStep === "confirmed" ? (
+          <ConfirmationView
+            name={deriveNameFromEmail(
+              authMode === "login" ? loginEmail : signupEmail,
+              signupName,
+            )}
+            date={selectedDate ? toDateKey(selectedDate) : "—"}
+            time={selectedTime ?? "—"}
+            onOkay={() => {
+              setAuthOpen(false);
+              router.push("/");
+            }}
+            onClose={() => {
+              setAuthOpen(false);
+              router.push("/");
+            }}
+          />
+        ) : (
+          <>
+            <div className="flex gap-2 rounded-2xl border border-black/10 bg-white p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("login");
+                  setAuthStep("auth");
+                }}
+                className={[
+                  "h-10 flex-1 rounded-2xl text-sm font-semibold transition",
+                  authMode === "login"
+                    ? "bg-gradient-to-r from-[rgba(254,162,88,0.25)] to-[rgba(163,188,251,0.28)]"
+                    : "hover:bg-black/[0.02]",
+                ].join(" ")}
+              >
+                Log in
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("signup");
+                  setAuthStep("auth");
+                }}
+                className={[
+                  "h-10 flex-1 rounded-2xl text-sm font-semibold transition",
+                  authMode === "signup"
+                    ? "bg-gradient-to-r from-[rgba(254,162,88,0.25)] to-[rgba(163,188,251,0.28)]"
+                    : "hover:bg-black/[0.02]",
+                ].join(" ")}
+              >
+                Sign up
+              </button>
+            </div>
+
+            {authMode === "login" ? (
+              <>
+                <div className="mt-4 grid grid-cols-1 gap-3">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-black/65">
+                      Email
+                    </span>
+                    <input
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="h-11 rounded-2xl border border-black/10 bg-white px-3 text-sm outline-none transition focus:ring-2 focus:ring-[#A3BCFB]/70"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-black/65">
+                      Password
+                    </span>
+                    <input
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="h-11 rounded-2xl border border-black/10 bg-white px-3 text-sm outline-none transition focus:ring-2 focus:ring-[#A3BCFB]/70"
+                    />
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  className="group relative mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
+                  onClick={() => {
+                    setAuthStep("confirmed");
+                  }}
+                >
+                  <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
+                  <span className="relative">Log in</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="mt-4 grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSignupMethod("apple");
+                        if (!signupEmail) setSignupEmail("apple.user@example.com");
+                      }}
+                      className="inline-flex h-11 items-center justify-center rounded-2xl border border-black/10 bg-white px-3 text-sm font-semibold transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB]/70"
+                    >
+                      Continue with Apple ID
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSignupMethod("google");
+                        if (!signupEmail) setSignupEmail("google.user@gmail.com");
+                      }}
+                      className="inline-flex h-11 items-center justify-center rounded-2xl border border-black/10 bg-white px-3 text-sm font-semibold transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB]/70"
+                    >
+                      Continue with Google Account
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-black/10" />
+                    <div className="text-xs font-medium text-black/50">or</div>
+                    <div className="h-px flex-1 bg-black/10" />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-black/65">
+                        Username
+                      </span>
+                      <input
+                        type="text"
+                        value={signupName}
+                        onChange={(e) => {
+                          setSignupMethod("email");
+                          setSignupName(e.target.value);
+                        }}
+                        placeholder="Your name"
+                        className="h-11 rounded-2xl border border-black/10 bg-white px-3 text-sm outline-none transition focus:ring-2 focus:ring-[#A3BCFB]/70"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-black/65">
+                        Email
+                      </span>
+                      <input
+                        type="email"
+                        value={signupEmail}
+                        onChange={(e) => {
+                          setSignupMethod("email");
+                          setSignupEmail(e.target.value);
+                        }}
+                        placeholder="you@example.com"
+                        className="h-11 rounded-2xl border border-black/10 bg-white px-3 text-sm outline-none transition focus:ring-2 focus:ring-[#A3BCFB]/70"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-black/65">
+                        Set password
+                      </span>
+                      <input
+                        type="password"
+                        value={signupPassword}
+                        onChange={(e) => {
+                          setSignupMethod("email");
+                          setSignupPassword(e.target.value);
+                        }}
+                        placeholder="••••••••"
+                        className="h-11 rounded-2xl border border-black/10 bg-white px-3 text-sm outline-none transition focus:ring-2 focus:ring-[#A3BCFB]/70"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="group relative mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
+                  onClick={() => {
+                    setAuthStep("confirmed");
+                  }}
+                >
+                  <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
+                  <span className="relative">Sign up</span>
+                </button>
+              </>
+            )}
+
+            <div className="mt-3 text-xs leading-5 text-black/55">
+              This is a placeholder auth step. Connect it to your auth provider
+              when ready.
+            </div>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -250,5 +484,58 @@ function SummaryRow(props: { label: string; value: string }) {
       <div className="mt-1 text-sm font-semibold">{props.value}</div>
     </div>
   );
+}
+
+function ConfirmationView(props: {
+  name: string;
+  date: string;
+  time: string;
+  onOkay: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div>
+      <div className="rounded-2xl border border-black/5 bg-gradient-to-r from-[rgba(254,162,88,0.14)] to-[rgba(163,188,251,0.16)] px-4 py-3">
+        <div className="text-sm font-semibold">
+          Hi {props.name}, your appointment for {props.date} at {props.time} is
+          confirmed.
+        </div>
+        <div className="mt-1 text-xs leading-5 text-black/60">
+          You can manage or reschedule from your dashboard.
+        </div>
+      </div>
+
+      <div className="mt-5 flex gap-3">
+        <button
+          type="button"
+          onClick={props.onOkay}
+          className="group relative inline-flex h-11 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-4 text-sm font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
+        >
+          <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
+          <span className="relative">Okay</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function deriveNameFromEmail(email: string, fallbackName?: string) {
+  const trimmedFallback = (fallbackName ?? "").trim();
+  if (trimmedFallback) return toTitleCase(trimmedFallback);
+
+  const raw = (email ?? "").trim();
+  if (!raw) return "there";
+
+  const local = raw.split("@")[0] ?? "";
+  const cleaned = local.replace(/[^a-zA-Z0-9._-]/g, "");
+  const parts = cleaned.split(/[._-]+/).filter(Boolean);
+  const base = parts.length ? parts[0]! : local;
+  return toTitleCase(base);
+}
+
+function toTitleCase(s: string) {
+  const t = s.trim();
+  if (!t) return "there";
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 

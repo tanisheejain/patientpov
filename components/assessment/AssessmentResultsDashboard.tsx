@@ -2,6 +2,7 @@ import { SceneCard } from "@/components/assessment/SceneCard";
 import { getSeverityStyles, type SeverityLabel } from "@/components/assessment/severity";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SectionCard } from "@/components/ui/SectionCard";
+import Link from "next/link";
 
 export type AssessmentResults = {
   severity: {
@@ -137,13 +138,13 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
             </SectionCard>
 
             <div className="pt-2">
-              <a
-                href="#"
+              <Link
+                href="/book-appointment"
                 className="group relative flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
               >
                 <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
                 <span className="relative">Book a Therapist Appointment</span>
-              </a>
+              </Link>
               <p className="mt-3 text-center text-xs leading-5 text-black/55">
                 Booking is optional — you can also retake the assessment anytime.
               </p>

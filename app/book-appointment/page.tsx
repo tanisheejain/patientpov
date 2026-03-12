@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarPicker, toDateKey } from "@/components/booking/CalendarPicker";
-import { FiltersRow, applyFilters, type BookingFilters } from "@/components/booking/FiltersRow";
 import { TherapistCard } from "@/components/booking/TherapistCard";
 import type { Therapist } from "@/components/booking/types";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -14,7 +13,7 @@ const PAGE_BG =
 export default function BookAppointmentPage() {
   const therapists: Therapist[] = [
     {
-      id: "t-reco",
+      id: "t-1",
       name: "Dr. Ananya Mehra",
       specialization: "Exposure therapy • Anxiety disorders",
       yearsExperience: 11,
@@ -27,19 +26,8 @@ export default function BookAppointmentPage() {
         "Aligned with moderate claustrophobia profiles and guided exposure pacing.",
     },
     {
-      id: "t-1",
-      name: "Dr. Rohan Kapoor",
-      specialization: "CBT • Phobias • Stress",
-      yearsExperience: 7,
-      bio: "Practical CBT frameworks with gradual exposure and breathing techniques.",
-      sessionMode: "In-person",
-      fee: 120,
-      rating: 4.6,
-      languages: ["English"],
-    },
-    {
-      id: "t-2",
       name: "Dr. Neha Iyer",
+      id: "t-2",
       specialization: "Exposure therapy • Panic disorder",
       yearsExperience: 9,
       bio: "Specializes in fear conditioning and step-by-step exposure hierarchies.",
@@ -47,10 +35,12 @@ export default function BookAppointmentPage() {
       fee: 160,
       rating: 4.7,
       languages: ["English", "Tamil"],
+      recommendedReason:
+        "Strong fit for AR-triggered panic patterns with structured exposure hierarchies.",
     },
     {
-      id: "t-3",
       name: "Dr. Vikram Singh",
+      id: "t-3",
       specialization: "ACT • Anxiety • Mindfulness",
       yearsExperience: 6,
       bio: "Acceptance-based tools with gentle exposure and values-driven progress.",
@@ -58,31 +48,13 @@ export default function BookAppointmentPage() {
       fee: 95,
       rating: 4.5,
       languages: ["English", "Hindi", "Punjabi"],
+      recommendedReason:
+        "Great for combining exposure with acceptance skills when avoidance is high.",
     },
   ];
 
-  const recommended = therapists[0]!;
-  const listTherapists = therapists.slice(1);
-
-  const availableLanguages = useMemo(() => {
-    const s = new Set<string>();
-    for (const t of listTherapists) for (const l of t.languages) s.add(l);
-    return Array.from(s).sort();
-  }, [listTherapists]);
-
-  const [filters, setFilters] = useState<BookingFilters>({
-    sessionMode: "Any",
-    language: "Any",
-    price: "Any",
-  });
-
-  const filteredTherapists = useMemo(
-    () => applyFilters(listTherapists, filters),
-    [listTherapists, filters],
-  );
-
-  const [selectedTherapistId, setSelectedTherapistId] = useState<string | null>(
-    null,
+  const [selectedTherapistId, setSelectedTherapistId] = useState<string>(
+    therapists[0]!.id,
   );
   const selectedTherapist =
     therapists.find((t) => t.id === selectedTherapistId) ?? null;
@@ -123,46 +95,36 @@ export default function BookAppointmentPage() {
           <div className="mt-8 grid grid-cols-1 gap-5 sm:mt-10 sm:gap-6">
             <SectionCard title="Recommended Therapist">
               <TherapistCard
-                therapist={recommended}
+                therapist={therapists.find((t) => t.id === selectedTherapistId) ?? therapists[0]!}
                 highlighted
                 actionLabel="Book with this Therapist"
+                selector={
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-black/65">
+                      Therapist
+                    </span>
+                    <select
+                      className="h-11 w-full rounded-2xl border border-black/10 bg-white px-3 text-sm font-semibold outline-none transition focus:ring-2 focus:ring-[#A3BCFB]/70"
+                      value={selectedTherapistId}
+                      onChange={(e) => {
+                        setSelectedTherapistId(e.target.value);
+                        setSelectedDate(null);
+                        setSelectedTime(null);
+                      }}
+                    >
+                      {therapists.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                }
                 onAction={() => {
-                  setSelectedTherapistId(recommended.id);
                   setSelectedDate(null);
                   setSelectedTime(null);
                 }}
               />
-            </SectionCard>
-
-            <SectionCard title="Therapists">
-              <FiltersRow
-                filters={filters}
-                onChange={setFilters}
-                availableLanguages={availableLanguages}
-              />
-
-              <div className="mt-5 grid grid-cols-1 gap-4">
-                {filteredTherapists.length ? (
-                  filteredTherapists.map((t) => (
-                    <TherapistCard
-                      key={t.id}
-                      therapist={t}
-                      actionLabel={
-                        selectedTherapistId === t.id ? "Selected" : "Select Therapist"
-                      }
-                      onAction={() => {
-                        setSelectedTherapistId(t.id);
-                        setSelectedDate(null);
-                        setSelectedTime(null);
-                      }}
-                    />
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-black/10 bg-white px-4 py-4 text-sm text-black/70">
-                    No therapists match these filters.
-                  </div>
-                )}
-              </div>
             </SectionCard>
 
             {selectedTherapist ? (
@@ -238,7 +200,7 @@ export default function BookAppointmentPage() {
                 />
                 <SummaryRow
                   label="Language"
-                  value={filters.language === "Any" ? "Any" : filters.language}
+                  value={selectedTherapist?.languages?.[0] ?? "—"}
                 />
               </div>
 

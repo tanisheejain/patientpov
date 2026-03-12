@@ -5,6 +5,7 @@ export function TherapistCard(props: {
   actionLabel: string;
   onAction: () => void;
   highlighted?: boolean;
+  selector?: React.ReactNode;
 }) {
   const { therapist } = props;
   const initials = therapist.name
@@ -45,19 +46,22 @@ export function TherapistCard(props: {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={props.onAction}
-          className={[
-            "relative inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-black transition",
-            props.highlighted
-              ? "bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] saturate-125 brightness-[0.88] shadow-[0_14px_28px_-22px_rgba(0,0,0,0.55)] hover:brightness-[0.95]"
-              : "border border-black/10 bg-white hover:bg-black/[0.02]",
-            "focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2",
-          ].join(" ")}
-        >
-          {props.actionLabel}
-        </button>
+        <div className="flex flex-col gap-3 sm:min-w-[220px] sm:items-stretch">
+          {props.selector ? <div>{props.selector}</div> : null}
+          <button
+            type="button"
+            onClick={props.onAction}
+            className={[
+              "relative inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-black transition",
+              props.highlighted
+                ? "bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] saturate-125 brightness-[0.88] shadow-[0_14px_28px_-22px_rgba(0,0,0,0.55)] hover:brightness-[0.95]"
+                : "border border-black/10 bg-white hover:bg-black/[0.02]",
+              "focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2",
+            ].join(" ")}
+          >
+            {props.actionLabel}
+          </button>
+        </div>
       </div>
 
       {therapist.recommendedReason ? (

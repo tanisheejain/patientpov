@@ -19,8 +19,16 @@ export type AssessmentResults = {
   recommendation: string;
 };
 
-export function AssessmentResultsDashboard(props: { assessment: AssessmentResults }) {
-  const { assessment } = props;
+export function AssessmentResultsDashboard(props: {
+  assessment: AssessmentResults;
+  showBackToHome?: boolean;
+  showBookAppointment?: boolean;
+}) {
+  const {
+    assessment,
+    showBackToHome = false,
+    showBookAppointment = true,
+  } = props;
   const severityStyles = getSeverityStyles(assessment.severity.label);
 
   return (
@@ -28,6 +36,14 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
       <main className="mx-auto flex w-full max-w-5xl flex-col px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto w-full max-w-3xl">
           <header className="flex flex-col gap-2">
+            {showBackToHome ? (
+              <Link
+                href="/"
+                className="inline-flex w-fit items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
+              >
+                Back to Home
+              </Link>
+            ) : null}
             <div className="inline-flex items-center gap-2 self-start rounded-full border border-black/5 bg-white px-3 py-1 text-xs font-medium tracking-wide">
               AR Assessment
               <span className="h-1 w-1 rounded-full bg-black/30" />
@@ -137,18 +153,20 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
               </div>
             </SectionCard>
 
-            <div className="pt-2">
-              <Link
-                href="/book-appointment"
-                className="group relative flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
-              >
-                <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
-                <span className="relative">Book a Therapist Appointment</span>
-              </Link>
-              <p className="mt-3 text-center text-xs leading-5 text-black/55">
-                Booking is optional — you can also retake the assessment anytime.
-              </p>
-            </div>
+            {showBookAppointment ? (
+              <div className="pt-2">
+                <Link
+                  href="/book-appointment"
+                  className="group relative flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
+                >
+                  <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
+                  <span className="relative">Book a Therapist Appointment</span>
+                </Link>
+                <p className="mt-3 text-center text-xs leading-5 text-black/55">
+                  Booking is optional — you can also retake the assessment anytime.
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       </main>

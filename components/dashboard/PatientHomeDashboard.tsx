@@ -105,7 +105,7 @@ export function PatientHomeDashboard() {
                     </div>
                   </div>
                   <Link
-                    href="/report"
+                    href="/report-view"
                     className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
                   >
                     View full report
@@ -228,4 +228,3 @@ function nextWeekISO() {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-

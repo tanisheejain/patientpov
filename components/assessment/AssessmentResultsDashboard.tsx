@@ -155,4 +155,3 @@ export function AssessmentResultsDashboard(props: { assessment: AssessmentResult
     </div>
   );
 }
-

@@ -221,7 +221,7 @@ export default function BookAppointmentPage() {
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Link
-                  href="/"
+                  href="/report"
                   className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
                 >
                   Back to Report
@@ -276,6 +276,7 @@ export default function BookAppointmentPage() {
         }
         onClose={() => {
           setAuthOpen(false);
+          if (authStep === "confirmed") router.replace("/");
         }}
       >
         {authStep === "confirmed" ? (
@@ -288,11 +289,11 @@ export default function BookAppointmentPage() {
             time={selectedTime ?? "—"}
             onOkay={() => {
               setAuthOpen(false);
-              router.push("/");
+              router.replace("/");
             }}
             onClose={() => {
               setAuthOpen(false);
-              router.push("/");
+              router.replace("/");
             }}
           />
         ) : (
@@ -538,4 +539,3 @@ function toTitleCase(s: string) {
   if (!t) return "there";
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
-

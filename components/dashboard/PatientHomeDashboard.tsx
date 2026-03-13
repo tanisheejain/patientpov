@@ -70,7 +70,7 @@ export function PatientHomeDashboard() {
                 </div>
               ) : (
                 <div className="text-sm leading-6 text-black/70">
-                  You haven't scheduled your first therapy session yet.
+                  You haven&apos;t scheduled your first therapy session yet.
                 </div>
               )}
             </SectionCard>

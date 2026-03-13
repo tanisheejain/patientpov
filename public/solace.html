@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#f7f5f2;
+    width:100vw; height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    font-family:'Cormorant Garamond',serif;
+  }
+
+  .bg {
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(ellipse 600px 500px at 20% 30%, rgba(254,162,88,0.13) 0%, transparent 70%),
+      radial-gradient(ellipse 600px 500px at 80% 70%, rgba(163,188,251,0.15) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 400px at 60% 20%, rgba(255,255,255,0.8) 0%, transparent 60%),
+      linear-gradient(160deg, #faf8f5 0%, #f0eef9 50%, #eef3ff 100%);
+    animation: bgBreath 4s ease-in-out forwards;
+    opacity:0;
+  }
+
+  .glow-warm {
+    position:absolute;
+    width:480px; height:480px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(254,162,88,0.16) 0%, transparent 65%);
+    transform:translate(-60px,-40px) scale(0.5);
+    opacity:0;
+    animation: glowWarm 3.8s ease-out forwards;
+  }
+  .glow-cool {
+    position:absolute;
+    width:480px; height:480px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(163,188,251,0.14) 0%, transparent 65%);
+    transform:translate(60px,-40px) scale(0.5);
+    opacity:0;
+    animation: glowCool 3.8s ease-out 0.1s forwards;
+  }
+
+  .ring-wrap {
+    position:absolute;
+    top:50%; left:50%;
+    animation: ringIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s forwards,
+               breathe 3s ease-in-out 1.8s infinite alternate;
+    opacity:0;
+  }
+  .ring-svg { width:230px; height:230px; }
+
+  .arc-warm {
+    fill:none;
+    stroke:url(#warmGrad);
+    stroke-width:7;
+    stroke-linecap:round;
+    stroke-dasharray:318;
+    stroke-dashoffset:318;
+    animation: drawWarm 1.5s cubic-bezier(0.4,0,0.2,1) 0.3s forwards;
+  }
+  .arc-cool {
+    fill:none;
+    stroke:url(#coolGrad);
+    stroke-width:7;
+    stroke-linecap:round;
+    stroke-dasharray:159;
+    stroke-dashoffset:159;
+    animation: drawCool 1.0s cubic-bezier(0.4,0,0.2,1) 1.05s forwards;
+  }
+
+  .particle {
+    position:absolute;
+    border-radius:50%;
+    opacity:0;
+    animation: particleFloat 3s ease-out forwards;
+  }
+
+  .wordmark-wrap {
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%, 52px);
+    overflow:hidden;
+    height:100px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .wordmark-inner {
+    color:#1a1a1a;
+    font-size:76px;
+    font-weight:300;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    transform:translateY(90px);
+    opacity:0;
+    white-space:nowrap;
+    animation: wordUp 1s cubic-bezier(0.16,1,0.3,1) 1.5s forwards;
+  }
+
+  .line-accent {
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%, 118px);
+    width:0; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(163,188,251,0.7), rgba(254,162,88,0.5), transparent);
+    animation: lineGrow 0.9s ease-out 2.05s forwards;
+  }
+
+  .tagline-wrap {
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%, 138px);
+    overflow:hidden;
+    height:32px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tagline-inner {
+    color:rgba(80,80,80,0.8);
+    font-size:15px;
+    font-weight:300;
+    letter-spacing:0.52em;
+    text-transform:uppercase;
+    transform:translateY(28px);
+    opacity:0;
+    white-space:nowrap;
+    animation: tagUp 0.8s ease-out 2.2s forwards;
+  }
+
+  .scene {
+    position:relative;
+    width:100vw; height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    animation: sceneIn 0.5s ease-out forwards;
+    opacity:0;
+  }
+
+  @keyframes sceneIn   { to { opacity:1; } }
+  @keyframes bgBreath  { 0% { opacity:0; } 30% { opacity:1; } 100% { opacity:1; } }
+  @keyframes glowWarm  {
+    0%   { opacity:0; transform:translate(-60px,-40px) scale(0.5); }
+    40%  { opacity:1; transform:translate(-60px,-40px) scale(1.05); }
+    100% { opacity:0.85; transform:translate(-60px,-40px) scale(1); }
+  }
+  @keyframes glowCool  {
+    0%   { opacity:0; transform:translate(60px,-40px) scale(0.5); }
+    50%  { opacity:0.9; transform:translate(60px,-40px) scale(1.1); }
+    100% { opacity:0.75; transform:translate(60px,-40px) scale(1); }
+  }
+  @keyframes ringIn {
+    to { opacity:1; transform:translate(-50%,-50%) translateY(-90px) scale(1) rotate(0deg); }
+  }
+  @keyframes breathe {
+    from { transform:translate(-50%,-50%) translateY(-90px) scale(1); }
+    to   { transform:translate(-50%,-50%) translateY(-90px) scale(1.035); }
+  }
+  @keyframes drawWarm  { to { stroke-dashoffset:0; } }
+  @keyframes drawCool  { to { stroke-dashoffset:0; } }
+  @keyframes wordUp    { to { transform:translateY(0); opacity:1; } }
+  @keyframes tagUp     { to { transform:translateY(0); opacity:1; } }
+  @keyframes lineGrow  { to { width:240px; } }
+  @keyframes particleFloat {
+    0%   { opacity:0; transform:translate(0,0) scale(0); }
+    20%  { opacity:0.9; }
+    100% { opacity:0; transform:var(--drift) scale(1.2); }
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="bg"></div>
+  <div class="glow-warm"></div>
+  <div class="glow-cool"></div>
+
+  <div class="particle" style="width:5px;height:5px;background:#FEA258;opacity:0.7;top:425px;left:515px;--drift:translate(-70px,-100px) scale(1);animation-delay:0.3s;"></div>
+  <div class="particle" style="width:4px;height:4px;background:#A3BCFB;opacity:0.8;top:445px;left:590px;--drift:translate(80px,-120px) scale(1);animation-delay:0.5s;"></div>
+  <div class="particle" style="width:6px;height:6px;background:rgba(254,162,88,0.5);top:535px;left:480px;--drift:translate(-55px,75px) scale(1);animation-delay:0.4s;"></div>
+  <div class="particle" style="width:4px;height:4px;background:#A3BCFB;opacity:0.6;top:525px;left:608px;--drift:translate(70px,80px) scale(1);animation-delay:0.6s;"></div>
+  <div class="particle" style="width:3px;height:3px;background:#FEA258;opacity:0.9;top:465px;left:455px;--drift:translate(-90px,-40px) scale(1);animation-delay:0.45s;"></div>
+  <div class="particle" style="width:4px;height:4px;background:#A3BCFB;top:490px;left:635px;--drift:translate(85px,-55px) scale(1);animation-delay:0.7s;"></div>
+  <div class="particle" style="width:3px;height:3px;background:#FEA258;opacity:0.5;top:395px;left:548px;--drift:translate(25px,-110px) scale(1);animation-delay:0.35s;"></div>
+  <div class="particle" style="width:5px;height:5px;background:rgba(163,188,251,0.6);top:570px;left:542px;--drift:translate(-20px,100px) scale(1);animation-delay:0.55s;"></div>
+
+  <div class="ring-wrap">
+    <svg class="ring-svg" viewBox="0 0 230 230">
+      <defs>
+        <linearGradient id="warmGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#FEA258;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#ffd0a0;stop-opacity:0.6"/>
+        </linearGradient>
+        <linearGradient id="coolGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#A3BCFB;stop-opacity:0.85"/>
+          <stop offset="100%" style="stop-color:#cddeff;stop-opacity:1"/>
+        </linearGradient>
+      </defs>
+      <path class="arc-warm" d="M 115 213 A 98 98 0 1 1 207 156"/>
+      <path class="arc-cool" d="M 207 156 A 98 98 0 0 1 115 17"/>
+    </svg>
+  </div>
+
+  <div class="wordmark-wrap">
+    <div class="wordmark-inner">Solace</div>
+  </div>
+
+  <div class="line-accent"></div>
+
+  <div class="tagline-wrap">
+    <div class="tagline-inner">Heal with intention</div>
+  </div>
+</div>
+
+<script>
+  function playAmbient() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.8);
+      master.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 3.2);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 4.8);
+      master.connect(ctx.destination);
+
+      const tones = [
+        [196.00, 0.0,  0.055],
+        [246.94, 0.12, 0.055],
+        [293.66, 0.24, 0.055],
+        [369.99, 0.36, 0.055],
+        [440.00, 0.5,  0.035],
+        [1108.0, 1.45, 0.016],
+        [880.00, 2.0,  0.022],
+      ];
+
+      tones.forEach(([freq, delay, amp]) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = freq > 500 ? 3000 : 900;
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(amp, ctx.currentTime + delay + 0.6);
+        gain.gain.linearRampToValueAtTime(amp, ctx.currentTime + 3.0);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 4.8);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(master);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + 5.2);
+      });
+    } catch (e) {}
+  }
+
+  window.addEventListener('load', playAmbient);
+  document.body.addEventListener('click', playAmbient, { once: true });
+  window.setTimeout(() => {
+    try {
+      window.parent.postMessage({ type: 'solace-intro-finished' }, window.location.origin);
+    } catch (e) {}
+  }, 5200);
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 import { CalendarPicker, toDateKey } from "@/components/booking/CalendarPicker";
 import { TherapistCard } from "@/components/booking/TherapistCard";
 import type { Therapist } from "@/components/booking/types";
-import { FLOW_COMPLETED_COOKIE } from "@/components/flow/storage";
+import { FLOW_COMPLETED_SESSION_KEY } from "@/components/flow/storage";
 import { Modal } from "@/components/ui/Modal";
 import { SectionCard } from "@/components/ui/SectionCard";
 import Link from "next/link";
@@ -96,7 +96,7 @@ export default function BookAppointmentPage() {
 
   const completeFlowAndGoHome = () => {
     if (typeof window !== "undefined") {
-      document.cookie = `${FLOW_COMPLETED_COOKIE}=1; Path=/; Max-Age=31536000; SameSite=Lax`;
+      window.sessionStorage.setItem(FLOW_COMPLETED_SESSION_KEY, "1");
     }
     router.replace("/");
   };

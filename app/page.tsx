@@ -1,13 +1,24 @@
-import { FLOW_COMPLETED_COOKIE } from "@/components/flow/storage";
+"use client";
+
+import { FLOW_COMPLETED_SESSION_KEY } from "@/components/flow/storage";
 import { PatientHomeDashboard } from "@/components/dashboard/PatientHomeDashboard";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default async function Home() {
-  const cookieStore = await cookies();
-  const flowCompleted = cookieStore.get(FLOW_COMPLETED_COOKIE)?.value === "1";
+export default function Home() {
+  const router = useRouter();
+  const [flowCompleted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.sessionStorage.getItem(FLOW_COMPLETED_SESSION_KEY) === "1";
+  });
 
-  if (!flowCompleted) redirect("/ar-entry");
+  useEffect(() => {
+    if (!flowCompleted) {
+      router.replace("/ar-entry");
+    }
+  }, [flowCompleted, router]);
+
+  if (!flowCompleted) return null;
 
   return <PatientHomeDashboard />;
 }

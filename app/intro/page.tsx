@@ -2,9 +2,9 @@
 
 import { INTRO_STORAGE_KEY } from "@/components/intro/introStorage";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, Suspense } from "react";
 
-export default function IntroPage() {
+function IntroContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -67,4 +67,11 @@ function normalizeNextPath(next: string | null) {
   if (!next.startsWith("/")) return "/";
   if (next.startsWith("//")) return "/";
   return next;
+}
+export default function IntroPage() {
+  return (
+    <Suspense fallback={null}>
+      <IntroContent />
+    </Suspense>
+  );
 }

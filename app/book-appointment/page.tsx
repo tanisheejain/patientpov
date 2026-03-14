@@ -3,6 +3,7 @@
 import { CalendarPicker, toDateKey } from "@/components/booking/CalendarPicker";
 import { TherapistCard } from "@/components/booking/TherapistCard";
 import type { Therapist } from "@/components/booking/types";
+import { FLOW_COMPLETED_COOKIE } from "@/components/flow/storage";
 import { Modal } from "@/components/ui/Modal";
 import { SectionCard } from "@/components/ui/SectionCard";
 import Link from "next/link";
@@ -92,6 +93,13 @@ export default function BookAppointmentPage() {
   const slots = useMemo(() => ["10:00 AM", "12:00 PM", "3:00 PM", "6:00 PM"], []);
 
   const canBook = Boolean(selectedTherapist && selectedDate && selectedTime);
+
+  const completeFlowAndGoHome = () => {
+    if (typeof window !== "undefined") {
+      document.cookie = `${FLOW_COMPLETED_COOKIE}=1; Path=/; Max-Age=31536000; SameSite=Lax`;
+    }
+    router.replace("/");
+  };
 
   return (
     <div className={PAGE_BG}>
@@ -276,7 +284,7 @@ export default function BookAppointmentPage() {
         }
         onClose={() => {
           setAuthOpen(false);
-          if (authStep === "confirmed") router.replace("/");
+          if (authStep === "confirmed") completeFlowAndGoHome();
         }}
       >
         {authStep === "confirmed" ? (
@@ -289,11 +297,11 @@ export default function BookAppointmentPage() {
             time={selectedTime ?? "—"}
             onOkay={() => {
               setAuthOpen(false);
-              router.replace("/");
+              completeFlowAndGoHome();
             }}
             onClose={() => {
               setAuthOpen(false);
-              router.replace("/");
+              completeFlowAndGoHome();
             }}
           />
         ) : (

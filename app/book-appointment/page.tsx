@@ -3,7 +3,11 @@
 import { CalendarPicker, toDateKey } from "@/components/booking/CalendarPicker";
 import { TherapistCard } from "@/components/booking/TherapistCard";
 import type { Therapist } from "@/components/booking/types";
-import { FLOW_COMPLETED_SESSION_KEY } from "@/components/flow/storage";
+import {
+  FLOW_COMPLETED_SESSION_KEY,
+  listAppointments,
+  saveAppointment,
+} from "@/components/flow/storage";
 import { Modal } from "@/components/ui/Modal";
 import { SectionCard } from "@/components/ui/SectionCard";
 import Link from "next/link";
@@ -14,6 +18,7 @@ const PAGE_BG =
   "min-h-screen bg-[radial-gradient(1100px_circle_at_50%_55%,rgba(163,188,251,0.55),transparent_62%),radial-gradient(1000px_circle_at_18%_92%,rgba(254,162,88,0.70),transparent_60%),linear-gradient(180deg,#ffffff,#ffffff)] text-black";
 
 export default function BookAppointmentPage() {
+  const concernLabel = "Claustrophobia";
   const therapists: Therapist[] = [
     {
       id: "t-1",
@@ -79,20 +84,46 @@ export default function BookAppointmentPage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [authStep, setAuthStep] = useState<"auth" | "confirmed">("auth");
+  const [isSavingAppointment, setIsSavingAppointment] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
-  const [signupMethod, setSignupMethod] = useState<
-    "apple" | "google" | "email"
-  >("email");
 
   const router = useRouter();
 
   const slots = useMemo(() => ["10:00 AM", "12:00 PM", "3:00 PM", "6:00 PM"], []);
 
   const canBook = Boolean(selectedTherapist && selectedDate && selectedTime);
+
+  const persistAppointment = async (args: {
+    patientEmail: string;
+    fallbackName?: string;
+  }) => {
+    if (!selectedTherapist || !selectedDate || !selectedTime) return;
+
+    const patientName = deriveNameFromEmail(args.patientEmail, args.fallbackName);
+    const patientId = buildPatientId(args.patientEmail, patientName);
+    const existing = await listAppointments();
+    const sessionNumber =
+      existing.filter(
+        (a) => a.patientId === patientId && a.concern === concernLabel,
+      ).length + 1;
+
+    await saveAppointment({
+      patientId,
+      patientName,
+      patientEmail: (args.patientEmail ?? "").trim().toLowerCase(),
+      therapistId: selectedTherapist.id,
+      therapistName: selectedTherapist.name,
+      concern: concernLabel,
+      sessionNumber,
+      dateISO: toDateKey(selectedDate),
+      time: selectedTime,
+      mode: selectedTherapist.sessionMode,
+    });
+  };
 
   const completeFlowAndGoHome = () => {
     if (typeof window !== "undefined") {
@@ -247,7 +278,6 @@ export default function BookAppointmentPage() {
                     setSignupName("");
                     setSignupEmail("");
                     setSignupPassword("");
-                    setSignupMethod("email");
                     setAuthOpen(true);
                   }}
                   className={[
@@ -370,9 +400,18 @@ export default function BookAppointmentPage() {
 
                 <button
                   type="button"
+                  disabled={isSavingAppointment}
                   className="group relative mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
-                  onClick={() => {
-                    setAuthStep("confirmed");
+                  onClick={async () => {
+                    try {
+                      setIsSavingAppointment(true);
+                      await persistAppointment({ patientEmail: loginEmail });
+                      setAuthStep("confirmed");
+                    } catch (error) {
+                      console.error("Could not save appointment", error);
+                    } finally {
+                      setIsSavingAppointment(false);
+                    }
                   }}
                 >
                   <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
@@ -386,7 +425,6 @@ export default function BookAppointmentPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setSignupMethod("apple");
                         if (!signupEmail) setSignupEmail("apple.user@example.com");
                       }}
                       className="inline-flex h-11 items-center justify-center rounded-2xl border border-black/10 bg-white px-3 text-sm font-semibold transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB]/70"
@@ -396,7 +434,6 @@ export default function BookAppointmentPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setSignupMethod("google");
                         if (!signupEmail) setSignupEmail("google.user@gmail.com");
                       }}
                       className="inline-flex h-11 items-center justify-center rounded-2xl border border-black/10 bg-white px-3 text-sm font-semibold transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB]/70"
@@ -420,7 +457,6 @@ export default function BookAppointmentPage() {
                         type="text"
                         value={signupName}
                         onChange={(e) => {
-                          setSignupMethod("email");
                           setSignupName(e.target.value);
                         }}
                         placeholder="Your name"
@@ -435,7 +471,6 @@ export default function BookAppointmentPage() {
                         type="email"
                         value={signupEmail}
                         onChange={(e) => {
-                          setSignupMethod("email");
                           setSignupEmail(e.target.value);
                         }}
                         placeholder="you@example.com"
@@ -450,7 +485,6 @@ export default function BookAppointmentPage() {
                         type="password"
                         value={signupPassword}
                         onChange={(e) => {
-                          setSignupMethod("email");
                           setSignupPassword(e.target.value);
                         }}
                         placeholder="••••••••"
@@ -462,9 +496,21 @@ export default function BookAppointmentPage() {
 
                 <button
                   type="button"
+                  disabled={isSavingAppointment}
                   className="group relative mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
-                  onClick={() => {
-                    setAuthStep("confirmed");
+                  onClick={async () => {
+                    try {
+                      setIsSavingAppointment(true);
+                      await persistAppointment({
+                        patientEmail: signupEmail,
+                        fallbackName: signupName,
+                      });
+                      setAuthStep("confirmed");
+                    } catch (error) {
+                      console.error("Could not save appointment", error);
+                    } finally {
+                      setIsSavingAppointment(false);
+                    }
                   }}
                 >
                   <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
@@ -546,4 +592,23 @@ function toTitleCase(s: string) {
   const t = s.trim();
   if (!t) return "there";
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
+function buildPatientId(email: string, fallbackName: string) {
+  const emailLocal = (email ?? "")
+    .trim()
+    .toLowerCase()
+    .split("@")[0]
+    ?.replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  if (emailLocal) return emailLocal;
+
+  const name = (fallbackName ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  if (name) return name;
+
+  return `patient-${Date.now()}`;
 }

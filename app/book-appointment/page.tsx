@@ -84,7 +84,7 @@ export default function BookAppointmentPage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [authStep, setAuthStep] = useState<"auth" | "confirmed">("auth");
-  const [isSavingAppointment, setIsSavingAppointment] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupName, setSignupName] = useState("");
@@ -130,6 +130,17 @@ export default function BookAppointmentPage() {
       window.sessionStorage.setItem(FLOW_COMPLETED_SESSION_KEY, "1");
     }
     router.replace("/");
+  };
+
+  const submitAuthAndBook = async (args: {
+    patientEmail: string;
+    fallbackName?: string;
+  }) => {
+    setAuthError(null);
+    setAuthStep("confirmed");
+    void persistAppointment(args).catch(() => {
+      console.warn("Could not save appointment; continuing in demo mode.");
+    });
   };
 
   return (
@@ -273,6 +284,7 @@ export default function BookAppointmentPage() {
                     if (!canBook) return;
                     setAuthMode("login");
                     setAuthStep("auth");
+                    setAuthError(null);
                     setLoginEmail("");
                     setLoginPassword("");
                     setSignupName("");
@@ -342,6 +354,7 @@ export default function BookAppointmentPage() {
                 onClick={() => {
                   setAuthMode("login");
                   setAuthStep("auth");
+                  setAuthError(null);
                 }}
                 className={[
                   "h-10 flex-1 rounded-2xl text-sm font-semibold transition",
@@ -357,6 +370,7 @@ export default function BookAppointmentPage() {
                 onClick={() => {
                   setAuthMode("signup");
                   setAuthStep("auth");
+                  setAuthError(null);
                 }}
                 className={[
                   "h-10 flex-1 rounded-2xl text-sm font-semibold transition",
@@ -400,19 +414,8 @@ export default function BookAppointmentPage() {
 
                 <button
                   type="button"
-                  disabled={isSavingAppointment}
                   className="group relative mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
-                  onClick={async () => {
-                    try {
-                      setIsSavingAppointment(true);
-                      await persistAppointment({ patientEmail: loginEmail });
-                      setAuthStep("confirmed");
-                    } catch (error) {
-                      console.error("Could not save appointment", error);
-                    } finally {
-                      setIsSavingAppointment(false);
-                    }
-                  }}
+                  onClick={() => submitAuthAndBook({ patientEmail: loginEmail })}
                 >
                   <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
                   <span className="relative">Log in</span>
@@ -496,22 +499,13 @@ export default function BookAppointmentPage() {
 
                 <button
                   type="button"
-                  disabled={isSavingAppointment}
                   className="group relative mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#FEA258] to-[#A3BCFB] px-6 py-4 text-base font-semibold text-black shadow-[0_18px_36px_-22px_rgba(0,0,0,0.55)] saturate-125 brightness-[0.85] transition hover:brightness-[0.92] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
-                  onClick={async () => {
-                    try {
-                      setIsSavingAppointment(true);
-                      await persistAppointment({
-                        patientEmail: signupEmail,
-                        fallbackName: signupName,
-                      });
-                      setAuthStep("confirmed");
-                    } catch (error) {
-                      console.error("Could not save appointment", error);
-                    } finally {
-                      setIsSavingAppointment(false);
-                    }
-                  }}
+                  onClick={() =>
+                    submitAuthAndBook({
+                      patientEmail: signupEmail,
+                      fallbackName: signupName,
+                    })
+                  }
                 >
                   <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(90deg,rgba(255,255,255,0.55),rgba(255,255,255,0.10))] opacity-0 transition-opacity group-hover:opacity-100" />
                   <span className="relative">Sign up</span>
@@ -523,6 +517,11 @@ export default function BookAppointmentPage() {
               This is a placeholder auth step. Connect it to your auth provider
               when ready.
             </div>
+            {authError ? (
+              <div className="mt-2 rounded-xl border border-[#FEA258]/35 bg-[rgba(254,162,88,0.12)] px-3 py-2 text-xs leading-5 text-black/75">
+                {authError}
+              </div>
+            ) : null}
           </>
         )}
       </Modal>

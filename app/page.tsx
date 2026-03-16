@@ -3,20 +3,20 @@
 import { FLOW_COMPLETED_SESSION_KEY } from "@/components/flow/storage";
 import { PatientHomeDashboard } from "@/components/dashboard/PatientHomeDashboard";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const [flowCompleted] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.sessionStorage.getItem(FLOW_COMPLETED_SESSION_KEY) === "1";
-  });
+  const flowCompleted =
+    typeof window !== "undefined" &&
+    window.sessionStorage.getItem(FLOW_COMPLETED_SESSION_KEY) === "1";
 
   useEffect(() => {
-    if (!flowCompleted) {
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem(FLOW_COMPLETED_SESSION_KEY) !== "1") {
       router.replace("/ar-entry");
     }
-  }, [flowCompleted, router]);
+  }, [router]);
 
   if (!flowCompleted) return null;
 

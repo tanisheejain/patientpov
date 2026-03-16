@@ -44,6 +44,27 @@ export function TherapistDashboard() {
         .sort((a, b) => toTimeValue(a.time) - toTimeValue(b.time)),
     [appointments, todayKey],
   );
+  const otherAppointmentDateKeys = useMemo(
+    () =>
+      new Set(
+        appointments.filter((a) => a.dateISO !== todayKey).map((a) => a.dateISO),
+      ),
+    [appointments, todayKey],
+  );
+  const calendarMonth = useMemo(() => new Date(), []);
+  const demoOtherAppointmentDateKeys = useMemo(
+    () => getDemoOtherAppointmentDateKeys(calendarMonth, todayKey),
+    [calendarMonth, todayKey],
+  );
+  const monthLabel = useMemo(
+    () =>
+      calendarMonth.toLocaleString(undefined, {
+        month: "long",
+        year: "numeric",
+      }),
+    [calendarMonth],
+  );
+  const calendarDays = useMemo(() => buildMonthGrid(calendarMonth), [calendarMonth]);
 
   return (
     <div className={PAGE_BG}>
@@ -88,12 +109,80 @@ export function TherapistDashboard() {
                 ))}
               </div>
             )}
+
+            <div className="mt-6 border-t border-black/10 pt-6">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-semibold">Calendar</h3>
+                <div className="text-sm text-black/60">{monthLabel}</div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-medium text-black/50">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="px-1 py-1 text-center">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-2 grid grid-cols-7 gap-2">
+                {calendarDays.map((day) => {
+                  const dateKey = toDateKey(day.date);
+                  const isToday = dateKey === todayKey;
+                  const hasOtherAppointment =
+                    otherAppointmentDateKeys.has(dateKey) ||
+                    demoOtherAppointmentDateKeys.has(dateKey);
+
+                  return (
+                    <div
+                      key={day.key}
+                      className={[
+                        "relative flex h-12 items-center justify-center rounded-2xl border text-sm font-semibold",
+                        day.inMonth
+                          ? "border-black/10 bg-white text-black"
+                          : "border-black/5 bg-white/50 text-black/25",
+                        isToday
+                          ? "border-transparent bg-gradient-to-br from-[rgba(254,162,88,0.22)] to-[rgba(163,188,251,0.24)] ring-2 ring-[#A3BCFB]/55"
+                          : null,
+                        hasOtherAppointment
+                          ? "border-[#4FAE62] bg-[#DDF5E3] text-[#185C26] shadow-[inset_0_0_0_1px_rgba(79,174,98,0.18)]"
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      {day.dayOfMonth}
+                      {hasOtherAppointment ? (
+                        <span className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-[#2F8F44]" />
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-3 text-xs text-black/60">
+                <div className="inline-flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-[linear-gradient(135deg,rgba(254,162,88,0.45),rgba(163,188,251,0.6))]" />
+                  Today
+                </div>
+                <div className="inline-flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-[#E9F8EC] ring-1 ring-[#7ACB88]/50" />
+                  Other appointments
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </main>
     </div>
   );
 }
+
+type CalendarDay = {
+  key: string;
+  date: Date;
+  dayOfMonth: number;
+  inMonth: boolean;
+};
 
 function toTimeValue(label: string) {
   const match = label.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
@@ -107,4 +196,38 @@ function toTimeValue(label: string) {
   if (meridiem === "PM") hour24 += 12;
 
   return hour24 * 60 + minute;
+}
+
+function buildMonthGrid(month: Date): CalendarDay[] {
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  const firstDay = new Date(year, monthIndex, 1);
+  const start = new Date(year, monthIndex, 1 - firstDay.getDay());
+
+  const days: CalendarDay[] = [];
+  for (let index = 0; index < 42; index += 1) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+
+    days.push({
+      key: `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`,
+      date,
+      dayOfMonth: date.getDate(),
+      inMonth: date.getMonth() === monthIndex,
+    });
+  }
+
+  return days;
+}
+
+function getDemoOtherAppointmentDateKeys(month: Date, todayKey: string) {
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  const candidateDays = [10, 18, 27];
+
+  return new Set(
+    candidateDays
+      .map((day) => toDateKey(new Date(year, monthIndex, day)))
+      .filter((dateKey) => dateKey !== todayKey),
+  );
 }

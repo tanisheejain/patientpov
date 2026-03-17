@@ -6,6 +6,7 @@ import {
   listAppointments,
   subscribeAppointments,
 } from "@/components/flow/storage";
+import { Modal } from "@/components/ui/Modal";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -14,6 +15,7 @@ const PAGE_BG =
 
 export function TherapistDashboard() {
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +53,21 @@ export function TherapistDashboard() {
       ),
     [appointments, todayKey],
   );
+  const appointmentsByDate = useMemo(() => {
+    const grouped = new Map<string, AppointmentRecord[]>();
+
+    for (const appointment of appointments) {
+      const existing = grouped.get(appointment.dateISO) ?? [];
+      existing.push(appointment);
+      grouped.set(appointment.dateISO, existing);
+    }
+
+    for (const sessions of grouped.values()) {
+      sessions.sort((a, b) => toTimeValue(a.time) - toTimeValue(b.time));
+    }
+
+    return grouped;
+  }, [appointments]);
   const calendarMonth = useMemo(() => new Date(), []);
   const demoOtherAppointmentDateKeys = useMemo(
     () => getDemoOtherAppointmentDateKeys(calendarMonth, todayKey),
@@ -65,18 +82,36 @@ export function TherapistDashboard() {
     [calendarMonth],
   );
   const calendarDays = useMemo(() => buildMonthGrid(calendarMonth), [calendarMonth]);
+  const selectedAppointments = selectedDateKey
+    ? appointmentsByDate.get(selectedDateKey) ?? []
+    : [];
+  const selectedDateLabel = selectedDateKey
+    ? formatDateLabel(selectedDateKey)
+    : null;
+  const selectedDateIsDemoOnly =
+    !!selectedDateKey &&
+    demoOtherAppointmentDateKeys.has(selectedDateKey) &&
+    selectedAppointments.length === 0;
 
   return (
     <div className={PAGE_BG}>
       <main className="mx-auto flex w-full max-w-5xl flex-col px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto w-full max-w-3xl">
-          <header className="flex flex-col gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Therapist Dashboard
-            </h1>
-            <p className="max-w-2xl text-sm leading-6 text-black/70 sm:text-base">
-              View and manage today&apos;s patient schedule.
-            </p>
+          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                Therapist Dashboard
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-black/70 sm:text-base">
+                View and manage today&apos;s patient schedule.
+              </p>
+            </div>
+            <Link
+              href="/therapist/profile"
+              className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
+            >
+              View profile
+            </Link>
           </header>
 
           <section className="mt-8 rounded-3xl border border-black/10 bg-white/95 p-5 shadow-[0_28px_80px_-58px_rgba(0,0,0,0.45)] sm:mt-10 sm:p-6">
@@ -128,15 +163,20 @@ export function TherapistDashboard() {
                 {calendarDays.map((day) => {
                   const dateKey = toDateKey(day.date);
                   const isToday = dateKey === todayKey;
+                  const hasRealAppointment = appointmentsByDate.has(dateKey);
                   const hasOtherAppointment =
                     otherAppointmentDateKeys.has(dateKey) ||
                     demoOtherAppointmentDateKeys.has(dateKey);
+                  const isClickable = hasRealAppointment || demoOtherAppointmentDateKeys.has(dateKey);
 
                   return (
-                    <div
+                    <button
                       key={day.key}
+                      type="button"
+                      disabled={!isClickable}
+                      onClick={() => setSelectedDateKey(dateKey)}
                       className={[
-                        "relative flex h-12 items-center justify-center rounded-2xl border text-sm font-semibold",
+                        "relative flex h-12 items-center justify-center rounded-2xl border text-sm font-semibold transition",
                         day.inMonth
                           ? "border-black/10 bg-white text-black"
                           : "border-black/5 bg-white/50 text-black/25",
@@ -146,15 +186,23 @@ export function TherapistDashboard() {
                         hasOtherAppointment
                           ? "border-[#4FAE62] bg-[#DDF5E3] text-[#185C26] shadow-[inset_0_0_0_1px_rgba(79,174,98,0.18)]"
                           : null,
+                        isClickable
+                          ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-18px_rgba(24,92,38,0.5)] focus:outline-none focus:ring-2 focus:ring-[#7ACB88]/70 focus:ring-offset-2"
+                          : "cursor-default",
                       ]
                         .filter(Boolean)
                         .join(" ")}
+                      aria-label={
+                        isClickable
+                          ? `View appointments for ${dateKey}`
+                          : `${dateKey} has no appointments`
+                      }
                     >
                       {day.dayOfMonth}
                       {hasOtherAppointment ? (
                         <span className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-[#2F8F44]" />
                       ) : null}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -173,6 +221,44 @@ export function TherapistDashboard() {
           </section>
         </div>
       </main>
+
+      <Modal
+        open={selectedDateKey !== null}
+        title={selectedDateLabel ? `Appointments for ${selectedDateLabel}` : undefined}
+        onClose={() => setSelectedDateKey(null)}
+      >
+        {selectedDateIsDemoOnly ? (
+          <div className="rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-4 text-sm leading-6 text-black/65">
+            This day is marked as booked in demo mode, but there are no saved appointment records to show yet.
+          </div>
+        ) : selectedAppointments.length === 0 ? (
+          <div className="rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-4 text-sm leading-6 text-black/65">
+            No appointment details found for this day.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {selectedAppointments.map((session) => (
+              <Link
+                key={session.id}
+                href={`/therapist/patients/${encodeURIComponent(session.patientId)}`}
+                onClick={() => setSelectedDateKey(null)}
+                className="rounded-2xl border border-black/10 bg-white px-4 py-4 transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB]/70"
+              >
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-base font-semibold">{session.time}</span>
+                  <span className="text-base">{session.patientName}</span>
+                </div>
+                <div className="mt-1 text-sm text-black/70">
+                  {session.concern} · Session {session.sessionNumber}
+                </div>
+                <div className="mt-1 text-xs text-black/55">
+                  {session.therapistName} · {session.mode}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -230,4 +316,16 @@ function getDemoOtherAppointmentDateKeys(month: Date, todayKey: string) {
       .map((day) => toDateKey(new Date(year, monthIndex, day)))
       .filter((dateKey) => dateKey !== todayKey),
   );
+}
+
+function formatDateLabel(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  if (!year || !month || !day) return dateKey;
+
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }

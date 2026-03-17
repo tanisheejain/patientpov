@@ -38,7 +38,7 @@ export function AssessmentResultsDashboard(props: {
           <header className="flex flex-col gap-2">
             {showBackToHome ? (
               <Link
-                href="/"
+                href="/patient"
                 className="inline-flex w-fit items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB] focus:ring-offset-2"
               >
                 Back to Home

@@ -129,7 +129,7 @@ export default function BookAppointmentPage() {
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem(FLOW_COMPLETED_SESSION_KEY, "1");
     }
-    router.replace("/");
+    router.replace("/patient");
   };
 
   const submitAuthAndBook = async (args: {

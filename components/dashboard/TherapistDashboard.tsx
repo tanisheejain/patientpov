@@ -14,6 +14,20 @@ const PAGE_BG =
   "min-h-screen bg-[radial-gradient(1100px_circle_at_50%_55%,rgba(163,188,251,0.55),transparent_62%),radial-gradient(1000px_circle_at_18%_92%,rgba(254,162,88,0.70),transparent_60%),linear-gradient(180deg,#ffffff,#ffffff)] text-black";
 const DEMO_CALENDAR_MONTH = new Date(2026, 2, 1); // March 2026
 const DEMO_DATE_KEY = toDateKey(new Date(2026, 2, 3));
+const REQUIRED_DEMO_PATIENTS = [
+  {
+    patientId: "patient-delina-tejwani",
+    patientName: "delina tejwani",
+    patientEmail: "delina.tejwani@example.com",
+    sessions: 1,
+  },
+  {
+    patientId: "patient-misha-parwani",
+    patientName: "misha parwani",
+    patientEmail: "misha.parwani@example.com",
+    sessions: 1,
+  },
+] as const;
 
 export function TherapistDashboard() {
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
@@ -105,16 +119,12 @@ export function TherapistDashboard() {
       });
     }
 
-    const includesDelina = Array.from(grouped.values()).some(
-      (patient) => patient.patientName.toLowerCase() === "delina tejwani",
+    const existingNames = new Set(
+      Array.from(grouped.values()).map((patient) => patient.patientName.toLowerCase()),
     );
-    if (!includesDelina) {
-      grouped.set("patient-delina-tejwani", {
-        patientId: "patient-delina-tejwani",
-        patientName: "misha parwani",
-        patientEmail: "delina.tejwani@example.com",
-        sessions: 1,
-      });
+    for (const requiredPatient of REQUIRED_DEMO_PATIENTS) {
+      if (existingNames.has(requiredPatient.patientName.toLowerCase())) continue;
+      grouped.set(requiredPatient.patientId, { ...requiredPatient });
     }
 
     return Array.from(grouped.values()).sort((a, b) =>
@@ -411,6 +421,5 @@ function formatDateLabel(dateKey: string) {
 function mapPatientName(name: string) {
   const normalized = name.trim().toLowerCase();
   if (normalized === "there") return "delina tejwani";
-  if (normalized === "delina tejwani") return "misha parwani";
   return name;
 }

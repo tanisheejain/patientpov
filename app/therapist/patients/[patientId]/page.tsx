@@ -214,6 +214,5 @@ function VrLevel(props: {
 function mapPatientName(name: string) {
   const normalized = name.trim().toLowerCase();
   if (normalized === "there") return "delina tejwani";
-  if (normalized === "delina tejwani") return "misha parwani";
   return name;
 }

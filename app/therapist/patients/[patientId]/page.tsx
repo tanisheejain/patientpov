@@ -17,6 +17,9 @@ export default function TherapistPatientProfilePage() {
   const patientId = decodeURIComponent(params.patientId);
 
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
+  const [selectedVrLevel, setSelectedVrLevel] = useState<number | null>(null);
+  const [vrNote, setVrNote] = useState("Sturggled in this section...");
+  const [noteShared, setNoteShared] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -48,6 +51,8 @@ export default function TherapistPatientProfilePage() {
   );
 
   const latest = patientSessions[0];
+  const displayName = latest ? mapPatientName(latest.patientName) : "";
+  const isDelinaProfile = displayName.toLowerCase() === "delina tejwani";
 
   return (
     <div className={PAGE_BG}>
@@ -73,12 +78,70 @@ export default function TherapistPatientProfilePage() {
             <>
               <section className="mt-8 rounded-3xl border border-black/10 bg-white/95 p-6 shadow-[0_28px_80px_-58px_rgba(0,0,0,0.45)]">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Info label="Patient" value={latest.patientName} />
+                  <Info label="Patient" value={displayName} />
                   <Info label="Email" value={latest.patientEmail || "Not provided"} />
                   <Info label="Primary concern" value={latest.concern} />
                   <Info label="Latest session" value={`Session ${latest.sessionNumber}`} />
                 </div>
               </section>
+
+              {isDelinaProfile ? (
+                <>
+                  <section className="mt-5 rounded-3xl border border-black/10 bg-white/95 p-6 shadow-[0_28px_80px_-58px_rgba(0,0,0,0.45)]">
+                    <h2 className="text-lg font-semibold">AR Report</h2>
+                    <div className="mt-4 rounded-2xl border border-black/10 bg-white px-4 py-4 text-sm leading-6 text-black/75">
+                      Completed AR baseline exposure assessment. Mild-to-moderate discomfort noted
+                      in enclosed simulated corridors; breathing regulation improved response time
+                      across repeated prompts.
+                    </div>
+                  </section>
+
+                  <section className="mt-5 rounded-3xl border border-black/10 bg-white/95 p-6 shadow-[0_28px_80px_-58px_rgba(0,0,0,0.45)]">
+                    <h2 className="text-lg font-semibold">VR</h2>
+                    <div className="mt-4 flex flex-col gap-3">
+                      <VrLevel
+                        label="Level 1"
+                        checked
+                        active={selectedVrLevel === 1}
+                        onClick={() => {
+                          setSelectedVrLevel(1);
+                          setNoteShared(false);
+                        }}
+                      />
+                      <VrLevel label="Level 2" checked={false} />
+                      <VrLevel label="Level 3" checked={false} />
+                    </div>
+                    {selectedVrLevel === 1 ? (
+                      <div className="mt-4 rounded-2xl border border-black/10 bg-white px-4 py-4">
+                        <div className="text-sm font-semibold text-black/80">Level 1 notes</div>
+                        <textarea
+                          value={vrNote}
+                          onChange={(event) => {
+                            setVrNote(event.target.value);
+                            setNoteShared(false);
+                          }}
+                          className="mt-3 min-h-24 w-full rounded-xl border border-black/10 px-3 py-2 text-sm text-black/80 outline-none transition focus:border-[#A3BCFB] focus:ring-2 focus:ring-[#A3BCFB]/40"
+                        />
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setNoteShared(true)}
+                            disabled={!vrNote.trim()}
+                            className="inline-flex items-center justify-center rounded-xl border border-black/10 bg-black px-3 py-2 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:bg-black/35"
+                          >
+                            Share notes with Delina
+                          </button>
+                          {noteShared ? (
+                            <span className="text-xs font-semibold text-[#1E7D34]">
+                              Notes shared with Delina.
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+                  </section>
+                </>
+              ) : null}
 
               <section className="mt-5 rounded-3xl border border-black/10 bg-white/95 p-6 shadow-[0_28px_80px_-58px_rgba(0,0,0,0.45)]">
                 <h2 className="text-lg font-semibold">Session History</h2>
@@ -113,4 +176,44 @@ function Info(props: { label: string; value: string }) {
       <div className="mt-1 text-sm font-semibold">{props.value}</div>
     </div>
   );
+}
+
+function VrLevel(props: {
+  label: string;
+  checked: boolean;
+  onClick?: () => void;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={props.onClick}
+      className={[
+        "flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left",
+        props.active
+          ? "border-[#A3BCFB] bg-[#F4F7FF] ring-2 ring-[#A3BCFB]/40"
+          : "border-black/10 bg-white",
+        props.onClick ? "cursor-pointer transition hover:bg-black/[0.02]" : "cursor-default",
+      ].join(" ")}
+    >
+      <span className="text-sm font-semibold text-black/80">{props.label}</span>
+      <span
+        className={[
+          "inline-flex h-6 min-w-6 items-center justify-center rounded-full border px-2 text-xs font-semibold",
+          props.checked
+            ? "border-[#2F8F44] bg-[#E9F8EC] text-[#185C26]"
+            : "border-black/15 bg-white text-black/40",
+        ].join(" ")}
+      >
+        {props.checked ? "✓" : ""}
+      </span>
+    </button>
+  );
+}
+
+function mapPatientName(name: string) {
+  const normalized = name.trim().toLowerCase();
+  if (normalized === "there") return "delina tejwani";
+  if (normalized === "delina tejwani") return "misha parwani";
+  return name;
 }

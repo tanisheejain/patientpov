@@ -12,6 +12,8 @@ import { useEffect, useMemo, useState } from "react";
 
 const PAGE_BG =
   "min-h-screen bg-[radial-gradient(1100px_circle_at_50%_55%,rgba(163,188,251,0.55),transparent_62%),radial-gradient(1000px_circle_at_18%_92%,rgba(254,162,88,0.70),transparent_60%),linear-gradient(180deg,#ffffff,#ffffff)] text-black";
+const DEMO_CALENDAR_MONTH = new Date(2026, 2, 1); // March 2026
+const DEMO_DATE_KEY = toDateKey(new Date(2026, 2, 3));
 
 export function TherapistDashboard() {
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
@@ -46,13 +48,6 @@ export function TherapistDashboard() {
         .sort((a, b) => toTimeValue(a.time) - toTimeValue(b.time)),
     [appointments, todayKey],
   );
-  const otherAppointmentDateKeys = useMemo(
-    () =>
-      new Set(
-        appointments.filter((a) => a.dateISO !== todayKey).map((a) => a.dateISO),
-      ),
-    [appointments, todayKey],
-  );
   const appointmentsByDate = useMemo(() => {
     const grouped = new Map<string, AppointmentRecord[]>();
 
@@ -68,11 +63,7 @@ export function TherapistDashboard() {
 
     return grouped;
   }, [appointments]);
-  const calendarMonth = useMemo(() => new Date(), []);
-  const demoOtherAppointmentDateKeys = useMemo(
-    () => getDemoOtherAppointmentDateKeys(calendarMonth, todayKey),
-    [calendarMonth, todayKey],
-  );
+  const calendarMonth = useMemo(() => new Date(DEMO_CALENDAR_MONTH), []);
   const monthLabel = useMemo(
     () =>
       calendarMonth.toLocaleString(undefined, {
@@ -88,10 +79,48 @@ export function TherapistDashboard() {
   const selectedDateLabel = selectedDateKey
     ? formatDateLabel(selectedDateKey)
     : null;
-  const selectedDateIsDemoOnly =
-    !!selectedDateKey &&
-    demoOtherAppointmentDateKeys.has(selectedDateKey) &&
-    selectedAppointments.length === 0;
+  const selectedDateIsDemo =
+    !!selectedDateKey && selectedDateKey === DEMO_DATE_KEY;
+  const demoDateAppointments = selectedDateIsDemo
+    ? selectedAppointments
+    : [];
+  const patients = useMemo(() => {
+    const grouped = new Map<
+      string,
+      { patientId: string; patientName: string; patientEmail: string; sessions: number }
+    >();
+
+    for (const appointment of appointments) {
+      const existing = grouped.get(appointment.patientId);
+      if (existing) {
+        existing.sessions += 1;
+        continue;
+      }
+
+      grouped.set(appointment.patientId, {
+        patientId: appointment.patientId,
+        patientName: mapPatientName(appointment.patientName),
+        patientEmail: appointment.patientEmail,
+        sessions: 1,
+      });
+    }
+
+    const includesDelina = Array.from(grouped.values()).some(
+      (patient) => patient.patientName.toLowerCase() === "delina tejwani",
+    );
+    if (!includesDelina) {
+      grouped.set("patient-delina-tejwani", {
+        patientId: "patient-delina-tejwani",
+        patientName: "misha parwani",
+        patientEmail: "delina.tejwani@example.com",
+        sessions: 1,
+      });
+    }
+
+    return Array.from(grouped.values()).sort((a, b) =>
+      a.patientName.localeCompare(b.patientName),
+    );
+  }, [appointments]);
 
   return (
     <div className={PAGE_BG}>
@@ -134,7 +163,7 @@ export function TherapistDashboard() {
                   >
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       <span className="text-base font-semibold">{session.time}</span>
-                      <span className="text-base">{session.patientName}</span>
+                      <span className="text-base">{mapPatientName(session.patientName)}</span>
                     </div>
                     <div className="mt-1 text-sm text-black/70">
                       {session.concern} · Session {session.sessionNumber}
@@ -144,6 +173,37 @@ export function TherapistDashboard() {
                 ))}
               </div>
             )}
+
+            <div className="mt-6 border-t border-black/10 pt-6">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-semibold">Patients</h3>
+                <div className="text-sm text-black/60">{patients.length} total</div>
+              </div>
+
+              {patients.length === 0 ? (
+                <div className="mt-4 rounded-2xl border border-black/5 bg-white px-4 py-6 text-sm text-black/65">
+                  No patient records yet.
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-col gap-3">
+                  {patients.map((patient) => (
+                    <Link
+                      key={patient.patientId}
+                      href={`/therapist/patients/${encodeURIComponent(patient.patientId)}`}
+                      className="rounded-2xl border border-black/10 bg-white px-4 py-4 transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB]/70"
+                    >
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="text-base font-semibold">{patient.patientName}</span>
+                        <span className="text-xs text-black/55">{patient.patientEmail}</span>
+                      </div>
+                      <div className="mt-1 text-sm text-black/70">
+                        {patient.sessions} {patient.sessions === 1 ? "session" : "sessions"}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="mt-6 border-t border-black/10 pt-6">
               <div className="flex items-center justify-between gap-3">
@@ -163,11 +223,8 @@ export function TherapistDashboard() {
                 {calendarDays.map((day) => {
                   const dateKey = toDateKey(day.date);
                   const isToday = dateKey === todayKey;
-                  const hasRealAppointment = appointmentsByDate.has(dateKey);
-                  const hasOtherAppointment =
-                    otherAppointmentDateKeys.has(dateKey) ||
-                    demoOtherAppointmentDateKeys.has(dateKey);
-                  const isClickable = hasRealAppointment || demoOtherAppointmentDateKeys.has(dateKey);
+                  const hasOtherAppointment = dateKey === DEMO_DATE_KEY;
+                  const isClickable = dateKey === DEMO_DATE_KEY;
 
                   return (
                     <button
@@ -227,10 +284,43 @@ export function TherapistDashboard() {
         title={selectedDateLabel ? `Appointments for ${selectedDateLabel}` : undefined}
         onClose={() => setSelectedDateKey(null)}
       >
-        {selectedDateIsDemoOnly ? (
-          <div className="rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-4 text-sm leading-6 text-black/65">
-            This day is marked as booked in demo mode, but there are no saved appointment records to show yet.
-          </div>
+        {selectedDateIsDemo ? (
+          demoDateAppointments.length === 0 ? (
+            <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-base font-semibold">3:00 PM</span>
+                <span className="text-base">Delina</span>
+              </div>
+              <div className="mt-1 text-sm text-black/70">
+                Claustrophobia · Session 1
+              </div>
+              <div className="mt-1 text-xs text-black/55">
+                Dr. Vikram Singh · In-person
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {demoDateAppointments.map((session) => (
+                <Link
+                  key={session.id}
+                  href={`/therapist/patients/${encodeURIComponent(session.patientId)}`}
+                  onClick={() => setSelectedDateKey(null)}
+                  className="rounded-2xl border border-black/10 bg-white px-4 py-4 transition hover:bg-black/[0.02] focus:outline-none focus:ring-2 focus:ring-[#A3BCFB]/70"
+                >
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-base font-semibold">{session.time}</span>
+                    <span className="text-base">{mapPatientName(session.patientName)}</span>
+                  </div>
+                  <div className="mt-1 text-sm text-black/70">
+                    {session.concern} · Session {session.sessionNumber}
+                  </div>
+                  <div className="mt-1 text-xs text-black/55">
+                    {session.therapistName} · {session.mode}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
         ) : selectedAppointments.length === 0 ? (
           <div className="rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-4 text-sm leading-6 text-black/65">
             No appointment details found for this day.
@@ -246,7 +336,7 @@ export function TherapistDashboard() {
               >
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="text-base font-semibold">{session.time}</span>
-                  <span className="text-base">{session.patientName}</span>
+                  <span className="text-base">{mapPatientName(session.patientName)}</span>
                 </div>
                 <div className="mt-1 text-sm text-black/70">
                   {session.concern} · Session {session.sessionNumber}
@@ -306,18 +396,6 @@ function buildMonthGrid(month: Date): CalendarDay[] {
   return days;
 }
 
-function getDemoOtherAppointmentDateKeys(month: Date, todayKey: string) {
-  const year = month.getFullYear();
-  const monthIndex = month.getMonth();
-  const candidateDays = [10, 18, 27];
-
-  return new Set(
-    candidateDays
-      .map((day) => toDateKey(new Date(year, monthIndex, day)))
-      .filter((dateKey) => dateKey !== todayKey),
-  );
-}
-
 function formatDateLabel(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
   if (!year || !month || !day) return dateKey;
@@ -328,4 +406,11 @@ function formatDateLabel(dateKey: string) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function mapPatientName(name: string) {
+  const normalized = name.trim().toLowerCase();
+  if (normalized === "there") return "delina tejwani";
+  if (normalized === "delina tejwani") return "misha parwani";
+  return name;
 }

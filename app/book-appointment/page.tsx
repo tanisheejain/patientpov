@@ -16,6 +16,7 @@ import { useMemo, useState } from "react";
 
 const PAGE_BG =
   "min-h-screen bg-[radial-gradient(1100px_circle_at_50%_55%,rgba(163,188,251,0.55),transparent_62%),radial-gradient(1000px_circle_at_18%_92%,rgba(254,162,88,0.70),transparent_60%),linear-gradient(180deg,#ffffff,#ffffff)] text-black";
+const DEMO_MONTH = new Date(2026, 2, 1); // March 2026
 
 export default function BookAppointmentPage() {
   const concernLabel = "Claustrophobia";
@@ -62,12 +63,12 @@ export default function BookAppointmentPage() {
   ];
 
   const [selectedTherapistId, setSelectedTherapistId] = useState<string>(
-    therapists[0]!.id,
+    "t-3",
   );
   const selectedTherapist =
     therapists.find((t) => t.id === selectedTherapistId) ?? null;
 
-  const month = useMemo(() => new Date(), []);
+  const month = useMemo(() => new Date(DEMO_MONTH), []);
 
   const availability = useMemo(() => {
     // Dummy: 8 available days this month
